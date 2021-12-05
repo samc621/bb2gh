@@ -1,0 +1,26 @@
+{
+  "name": "bb2gh",
+  "version": "1.0.0",
+  "description": "Migrate repos from Bitbucket to GitHub",
+  "keywords": [
+    "Bitbucket",
+    "GitHub",
+    "migrate",
+    "repositories",
+    "repos"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samc621/bb2gh.git"
+  },
+  "author": "Samuel Corso",
+  "license": "ISC",
+  "homepage": "https://github.com/samc621/bb2gh#readme",
+  "dependencies": {
+    "axios": "^0.24.0"
+  }
+}
