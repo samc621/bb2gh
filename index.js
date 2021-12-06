@@ -40,7 +40,7 @@ const createGHRepoIfNotExists = async (repo) => {
                 'Authorization': `Basic ${ghAuth}`,
                 'Accept': 'application/vnd.github.v3+json'
             }
-        })
+        });
         console.log(`Repo ${repo} already exists on Github`);
         return;
     } catch (err) {
@@ -55,13 +55,13 @@ const createGHRepoIfNotExists = async (repo) => {
             'Authorization': `Basic ${ghAuth}`,
             'Accept': 'application/vnd.github.v3+json'
         }
-    })
+    });
     console.log(`Created repo ${repo} on Github`);
 };
 
 (async () => {
     let repos = [];
-    console.log('Fetching repos from Bitbucket...')
+    console.log('Fetching repos from Bitbucket...');
     let { repoNames, next } = await fetchBBRepos(`https://api.bitbucket.org/2.0/repositories/${BB_ORGANIZATION}`);
     repos = repos.concat(repoNames);
     while (next) {
@@ -81,21 +81,21 @@ const createGHRepoIfNotExists = async (repo) => {
         const clone = cp.spawn('git', ['clone', '--bare', `git@bitbucket.org:${BB_ORGANIZATION}/${repo}.git`], { cwd: 'tmp', stdio: 'inherit' });
         await new Promise((resolve) => {
             clone.on('close', async () => {
-                console.log(`Cloned repo ${repo}, now creating it on Github...`)
+                console.log(`Cloned repo ${repo}, now creating it on Github...`);
                 await createGHRepoIfNotExists(repo);
                 console.log(`Mirroring ${repo} on Github...`);
-                const push = cp.spawn('git', ['push', '--mirror', `git@github.com:${GH_ORGANIZATION}/${repo}.git`], { cwd: `tmp/${repo}.git`, stdio: 'inherit' })
+                const push = cp.spawn('git', ['push', '--mirror', `git@github.com:${GH_ORGANIZATION}/${repo}.git`], { cwd: `tmp/${repo}.git`, stdio: 'inherit' });
                 await new Promise((_resolve) => {
                     push.on('close', async () => {
                         const reposLeft = numRepos - repoIndex - 1;
                         console.log(`Mirrored repo ${repo} on Github, ${reposLeft} repos left`);
                         await rm(`tmp/${repo}.git`, { recursive: true });
-                        _resolve()
-                    })
+                        _resolve();
+                    });
                 });
                 resolve();
             });
-        })
+        });
     }
 })();
 
