@@ -11,7 +11,7 @@ const {
     GH_USERNAME,
     GH_PASSWORD,
     GH_ORGANIZATION
-} = process.env
+} = process.env;
 
 assert(BB_USERNAME && BB_PASSWORD && BB_ORGANIZATION && GH_USERNAME && GH_PASSWORD && GH_ORGANIZATION);
 
@@ -31,7 +31,7 @@ const fetchBBRepos = async (url) => {
     const { next, values } = data;
     const repoNames = values.map((repo) => repo.name);
     return { repoNames, next };
-}
+};
 
 const createGHRepoIfNotExists = async (repo) => {
     try {
@@ -57,7 +57,7 @@ const createGHRepoIfNotExists = async (repo) => {
         }
     })
     console.log(`Created repo ${repo} on Github`);
-}
+};
 
 (async () => {
     let repos = [];
