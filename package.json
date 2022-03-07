@@ -21,6 +21,6 @@
   "license": "ISC",
   "homepage": "https://github.com/samc621/bb2gh#readme",
   "dependencies": {
-    "axios": "^0.24.0"
+    "axios": "^0.26.0"
   }
 }
