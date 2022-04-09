@@ -1,8 +1,8 @@
-const axios = require('axios').default;
-const cp = require('child_process');
-const fs = require('fs');
-const { promisify } = require('util');
-const assert = require('assert');
+import axios from 'axios';
+import cp from 'child_process';
+import fs from 'fs';
+import { promisify } from 'util';
+import assert from 'assert';
 
 const {
     BB_USERNAME,

@@ -13,6 +13,7 @@
   "scripts": {
     "start": "node index.js"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/samc621/bb2gh.git"
