@@ -2,27 +2,36 @@ import axios from 'axios';
 import cp from 'child_process';
 import fs from 'fs';
 import { promisify } from 'util';
-import assert from 'assert';
-
-const {
-    BB_USERNAME,
-    BB_PASSWORD,
-    BB_ORGANIZATION,
-    GH_USERNAME,
-    GH_PASSWORD,
-    GH_ORGANIZATION
-} = process.env;
-
-assert(BB_USERNAME && BB_PASSWORD && BB_ORGANIZATION && GH_USERNAME && GH_PASSWORD && GH_ORGANIZATION);
-
-const bbAuth = Buffer.from(`${BB_USERNAME}:${BB_PASSWORD}`).toString('base64');
-const ghAuth = Buffer.from(`${GH_USERNAME}:${GH_PASSWORD}`).toString('base64');
+import prompts from 'prompts';
 
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const rm = promisify(fs.rm);
 
-const fetchBBRepos = async (url) => {
+const requiredInputs = [
+    'BB_USERNAME',
+    'BB_PASSWORD',
+    'BB_ORGANIZATION',
+    'GH_USERNAME',
+    'GH_PASSWORD',
+    'GH_ORGANIZATION'
+];
+const inputQuestions = requiredInputs.map((input) => {
+    return {
+        type: /password/i.test(input) ? 'password' : 'text',
+        name: input,
+        message: `Please enter your ${input}`,
+        validate: (value) => value.length > 0 ? true : `${input} is required`
+    };
+});
+const confirmQuestion = {
+    type: 'confirm',
+    name: 'confirm',
+    message: 'Are you sure you want to continue?',
+};
+const questions = [...inputQuestions, confirmQuestion];
+
+const fetchBBRepos = async ({ url, bbAuth }) => {
     const { data } = await axios.get(url, {
         headers: {
             'Authorization': `Basic ${bbAuth}`
@@ -33,9 +42,9 @@ const fetchBBRepos = async (url) => {
     return { repoNames, next };
 };
 
-const createGHRepoIfNotExists = async (repo) => {
+const createGHRepoIfNotExists = async ({ repo, ghAuth, ghOrg }) => {
     try {
-        await axios.get(`https://api.github.com/repos/${GH_ORGANIZATION}/${repo}`, {
+        await axios.get(`https://api.github.com/repos/${ghOrg}/${repo}`, {
             headers: {
                 'Authorization': `Basic ${ghAuth}`,
                 'Accept': 'application/vnd.github.v3+json'
@@ -46,7 +55,7 @@ const createGHRepoIfNotExists = async (repo) => {
     } catch (err) {
         // no-op
     }
-    await axios.post(`https://api.github.com/orgs/${GH_ORGANIZATION}/repos`,
+    await axios.post(`https://api.github.com/orgs/${ghOrg}/repos`,
         {
             name: repo,
             visibility: 'private'
@@ -60,12 +69,22 @@ const createGHRepoIfNotExists = async (repo) => {
 };
 
 (async () => {
+    const {
+        BB_USERNAME,
+        BB_PASSWORD,
+        BB_ORGANIZATION,
+        GH_USERNAME,
+        GH_PASSWORD,
+        GH_ORGANIZATION
+    } = await prompts(questions);
+    const bbAuth = Buffer.from(`${BB_USERNAME}:${BB_PASSWORD}`).toString('base64');
+    const ghAuth = Buffer.from(`${GH_USERNAME}:${GH_PASSWORD}`).toString('base64');
     let repos = [];
     console.log('Fetching repos from Bitbucket...');
-    let { repoNames, next } = await fetchBBRepos(`https://api.bitbucket.org/2.0/repositories/${BB_ORGANIZATION}`);
+    let { repoNames, next } = await fetchBBRepos({ url: `https://api.bitbucket.org/2.0/repositories/${BB_ORGANIZATION}`, bbAuth });
     repos = repos.concat(repoNames);
     while (next) {
-        const { repoNames: _repoNames, next: _next } = await fetchBBRepos(next);
+        const { repoNames: _repoNames, next: _next } = await fetchBBRepos({ url: next, bbAuth });
         repos = repos.concat(_repoNames);
         next = _next;
     }
@@ -82,7 +101,7 @@ const createGHRepoIfNotExists = async (repo) => {
         await new Promise((resolve) => {
             clone.on('close', async () => {
                 console.log(`Cloned repo ${repo}, now creating it on Github...`);
-                await createGHRepoIfNotExists(repo);
+                await createGHRepoIfNotExists({ repo, ghAuth, ghOrg: GH_ORGANIZATION });
                 console.log(`Mirroring ${repo} on Github...`);
                 const push = cp.spawn('git', ['push', '--mirror', `git@github.com:${GH_ORGANIZATION}/${repo}.git`], { cwd: `tmp/${repo}.git`, stdio: 'inherit' });
                 await new Promise((_resolve) => {
