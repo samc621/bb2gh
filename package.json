@@ -1,6 +1,6 @@
 {
   "name": "bb2gh",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Migrate repos from Bitbucket to GitHub",
   "keywords": [
     "Bitbucket",
